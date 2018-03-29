@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+
+if [ -z ${1} ]; then
+    echo ""
+    echo "Usage: `basename ${0}` <terraform-tfstate> [custom-state]"
+    echo ""
+    echo " - push local salt-pillars and salt-states to host(s) via ssh-agent auth session."
+    echo ""
+    echo "    <terraform-tfstate> (required) - the terraform.tfstate file"
+    echo "    <custom-state> (optional) - custom_state salt function to call"
+    echo ""
+    exit 1
+fi
+
+echo ''
+echo `basename ${0}`
+echo '==========='
+
+terraform_tfstate=${1}
+custom_state=${2:-"state.highstate"}
+ssh_port="22"
+
+if [ `which jq | wc -l` -lt 1 ]; then
+    echo 'ERROR: required binary "jq" not available on this system, please install it first.'
+    exit 1
+fi
+
+if [ `which rsync | wc -l` -lt 1 ]; then
+    echo 'ERROR: required binary "rsync" not available on this system, please install it first.'
+    exit 1
+fi
+
+if [ ! -f ${terraform_tfstate} ]; then
+    echo 'ERROR: unable to locate terraform.tfstate required extract required attributes from'
+    exit 1
+fi
+
+local_states_path=`cat ${terraform_tfstate} | jq '.modules[].outputs.salt_local_state_tree.value' | grep -v '^null' | tr -d '"'`
+local_states_path=`realpath ${local_states_path}`
+echo 'local_states_path: '${local_states_path}
+
+local_pillars_path=`cat ${terraform_tfstate} | jq '.modules[].outputs.salt_local_pillar_roots.value' | grep -v '^null' | tr -d '"'`
+local_pillars_path=`realpath ${local_pillars_path}`
+echo 'local_pillars_path: '${local_pillars_path}
+
+remote_states_path=`cat ${terraform_tfstate} | jq '.modules[].outputs.salt_remote_state_tree.value' | grep -v '^null' | tr -d '"'`
+echo 'remote_states_path: '${remote_states_path}
+
+remote_pillars_path=`cat ${terraform_tfstate} | jq '.modules[].outputs.salt_remote_pillar_roots.value' | grep -v '^null' | tr -d '"'`
+echo 'remote_pillars_path: '${remote_pillars_path}
+
+if [ ! -d ${local_states_path} ]; then
+    echo 'ERROR: unable to locate local_states_path: '${local_states_path}
+    exit 1
+fi
+
+if [ ! -d ${local_pillars_path} ]; then
+    echo 'ERROR: unable to locate local_pillars_path: '${local_pillars_path}
+    exit 1
+fi
+
+remote_address=`cat ${terraform_tfstate} | jq '.modules[].resources[] | select(.type=="digitalocean_droplet") | .primary.attributes.ipv4_address' | tr -d '"'`
+echo 'remote_address: '${remote_address}
+
+nc -z -w5 ${remote_address} ${ssh_port}
+if [ ${?} -gt 0 ]; then
+    echo 'ERROR: unable to connect to '${remote_address}' on tcp:'${ssh_port}
+    exit 1
+fi
+echo 'connect to '${remote_address}' on tcp:'${ssh_port}' - Okay!'
+
+echo 'setting remote file ownership...'
+ssh ${remote_address} "sudo chown -R \`whoami\` /opt/salt"
+
+rsync -ra --delete ${local_states_path}/ ${remote_address}:${remote_states_path}/
+if [ ${?} -eq 0 ]; then
+    echo 'rsyncd remote_states_path - Okay!'
+else
+    echo 'ERROR: problem rsyncing remote_states_path'
+    exit 1
+fi
+
+rsync -ra --delete ${local_pillars_path}/ ${remote_address}:${remote_pillars_path}/
+if [ ${?} -eq 0 ]; then
+    echo 'rsyncd remote_pillars_path - Okay!'
+else
+    echo 'ERROR: problem rsyncing remote_pillars_path'
+    exit 1
+fi
+
+echo 'calling salt-call over ssh...'
+salt_call_command="sudo salt-call --local ${custom_state} --file-root=${remote_states_path} --pillar-root=${remote_pillars_path} --retcode-passthrough"
+ssh ${remote_address} "${salt_call_command}"
+
+echo ''
+exit 0

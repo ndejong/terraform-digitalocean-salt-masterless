@@ -20,6 +20,26 @@ module "droplet-saltstack-example" {
 }
 ```
 
+Additionally, the `salt-pusher` tool is provided to easily push new salt-states and salt-pillars and invoke 
+a salt-call, as shown:-
+
+```bash
+./tools/salt-pusher /path/to/terraform.tfstate
+
+salt-pusher
+===========
+local_states_path: /path/to/salt/states
+local_pillars_path: /path/to/salt/pillars
+remote_states_path: /opt/salt/states
+remote_pillars_path: /opt/salt/pillars
+remote_address: x.x.x.x
+connect to x.x.x.x on tcp:22 - Okay!
+setting remote file ownership...
+rsyncd remote_states_path - Okay!
+rsyncd remote_pillars_path - Okay!
+calling salt-call over ssh...
+
+```
 
 ## Input Variables - Required
 
