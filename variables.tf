@@ -28,7 +28,9 @@ variable "permit_root_login" {
 
 variable "salt_local_minion_config_file" {
   description = "Local salt minion config to be pushed to the remote system"
-  default = ""
+  # NB: the pointer to /dev/null exists to prevent Terraform complaining about "file: open : no such file or directory"
+  #     when no local config file is required
+  default = "/dev/null"
 }
 
 variable "salt_remote_state_tree" {

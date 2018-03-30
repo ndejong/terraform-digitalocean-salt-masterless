@@ -83,7 +83,7 @@ if [ ${?} -gt 0 ]; then
 fi
 echo 'connect to '${remote_address}' on tcp:'${ssh_port}' - Okay!'
 
-if [ ! -z ${local_minion_config_file} ]; then
+if [ ${local_minion_config_file} != '/dev/null' ]; then
     echo 'uploading local_minion_config_file and putting into place...'
     scp "${local_minion_config_file}" ${remote_address}:/tmp/terraform-digitalocean-salt-masterless_minion.config
     ssh ${remote_address} "sudo mv /tmp/terraform-digitalocean-salt-masterless_minion.config /etc/salt/minion; sudo chmod 0644 /etc/salt/minion; sudo chown root:root /etc/salt/minion"

@@ -85,7 +85,7 @@ resource "digitalocean_droplet" "droplet" {
     inline = [
       # "mkdir -p /etc/salt",
       # "echo '${base64gzip(file("${var.salt_local_minion_config_file}"))}' | base64 -d | gunzip > /etc/salt/minion"
-      "if [ ! -z '${var.salt_local_minion_config_file}' ]; then mkdir -p /etc/salt; echo '${base64gzip(file("${var.salt_local_minion_config_file}"))}' | base64 -d | gunzip > /etc/salt/minion; fi",
+      "if [ '${var.salt_local_minion_config_file}' != '/dev/null' ]; then mkdir -p /etc/salt; echo '${base64gzip(file("${var.salt_local_minion_config_file}"))}' | base64 -d | gunzip > /etc/salt/minion; fi",
     ]
   }
 
