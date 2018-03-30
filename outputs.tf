@@ -32,6 +32,11 @@ output "terraform_bootstrap_sshkey" {
   value = "terraform-bootstrap-sshkey-${random_string.random-chars.result}"
 }
 
+output "salt_local_minion_config_file" {
+  description = ""
+  value = "${var.salt_local_minion_config_file}"
+}
+
 output "salt_local_state_tree" {
   description = ""
   value = "${var.salt_local_state_tree}"

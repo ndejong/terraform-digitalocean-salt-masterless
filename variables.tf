@@ -26,6 +26,11 @@ variable "permit_root_login" {
   default = 0
 }
 
+variable "salt_local_minion_config_file" {
+  description = "Local salt minion config to be pushed to the remote system"
+  default = ""
+}
+
 variable "salt_remote_state_tree" {
   description = "Remote system remote_state_tree path"
   default = "/srv/salt"

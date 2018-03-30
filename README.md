@@ -62,6 +62,10 @@ Salt local_pillar_roots path
 Permit root login after droplet has completed deployment - NB: the root bootstrap-sshkey remains in CLEARTEXT in the Terraform statefile, setting this parameter to '0' removes the bootstrap ssh-publickey and additionally sets PermitRootLogin to 'no' after the bootstrap process is complete
  - Default: 0
 
+## salt_local_minion_config_file
+Local salt minion config to be pushed to the remote system
+ - Default: ""
+
 ### salt_remote_state_tree
 Remote system remote_state_tree path
  - Default: "/srv/salt"
@@ -123,6 +127,8 @@ The volume attach to this digitalocean-droplet in the format `<mount-point>:<mou
 
 ### terraform_bootstrap_sshkey
 The terraform-bootstrap-sshkey that was used to bootstrap this droplet.
+
+### salt_local_minion_config_file
 
 ### salt_local_state_tree
 

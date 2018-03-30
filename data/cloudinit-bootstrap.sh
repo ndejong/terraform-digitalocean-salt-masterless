@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-export HOME=/root
-export LANG="en_US.UTF-8"
-export LANGUAGE="en_US:en"
-export LC_ALL="en_US.UTF-8"
-
 # volume0 - if defined
 if [ `echo -n ${volume0_dev} | wc -c` -gt 8 ]; then
     while [ ! -b ${volume0_dev} ];

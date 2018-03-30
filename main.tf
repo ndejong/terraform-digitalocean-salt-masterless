@@ -32,13 +32,18 @@ data "template_file" "cloudinit-bootstrap-sh" {
 }
 
 data "template_cloudinit_config" "droplet-userdata" {
-  # NB: some kind of cloud-init issue prevents gzip+base64 from working with digitalocean
+
+  #
+  # NB: some kind of cloud-init issue prevents gzip+base64 from working with digitalocean, we (mostly) work around this
+  # using a " echo | base64 -d | gunzip | /bin/bash" style pipe chain as per below
+  #
   gzip = false
   base64_encode = false
+
   part {
     content_type = "text/x-shellscript"
     filename = "cloudinit-bootstrap.sh"
-    content = "${data.template_file.cloudinit-bootstrap-sh.rendered}"
+    content = "#!/bin/bash\necho -n '${base64gzip(data.template_file.cloudinit-bootstrap-sh.rendered)}' | base64 -d | gunzip | /bin/bash"
   }
 }
 
@@ -75,7 +80,25 @@ resource "digitalocean_droplet" "droplet" {
     ]
   }
 
+  # workaround for salt-masterless:minion_config_file issue described in provisioner:salt-masterless below
+  provisioner "remote-exec" {
+    inline = [
+      # "mkdir -p /etc/salt",
+      # "echo '${base64gzip(file("${var.salt_local_minion_config_file}"))}' | base64 -d | gunzip > /etc/salt/minion"
+      "if [ ! -z '${var.salt_local_minion_config_file}' ]; then mkdir -p /etc/salt; echo '${base64gzip(file("${var.salt_local_minion_config_file}"))}' | base64 -d | gunzip > /etc/salt/minion; fi",
+    ]
+  }
+
   provisioner "salt-masterless" {
+
+    #
+    # NB: as at commit:e9e4ee4 there seems to be a bug in https://github.com/hashicorp/terraform/blob/master/builtin/provisioners/salt-masterless/resource_provisioner.go
+    #     that is preventing p.RemoteStateTree and p.RemotePillarRoots being set when p.MinionConfig == "" which in turn
+    #     means it is not currently possible to use the "minion_config_file" option in this module until resolved
+    #
+    # minion_config_file = "${var.salt_local_minion_config_file}"
+    #
+
     local_state_tree = "${var.salt_local_state_tree}"
     local_pillar_roots = "${var.salt_local_pillar_roots}"
     remote_state_tree = "${var.salt_remote_state_tree}"
@@ -102,6 +125,7 @@ resource "null_resource" "droplet-permitrootlogin" {
     inline = [
       "sed -i -e '/^PermitRootLogin/s/^.*$/PermitRootLogin no/' /etc/ssh/sshd_config",
       "rm -f /root/.ssh/authorized_keys",
+      "rm -f /root/.ssh/*.pub",
     ]
   }
 

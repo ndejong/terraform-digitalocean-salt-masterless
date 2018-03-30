@@ -25,6 +25,11 @@ if [ `which jq | wc -l` -lt 1 ]; then
     exit 1
 fi
 
+if [ `which nc | wc -l` -lt 1 ]; then
+    echo 'ERROR: required binary "nc" not available on this system, please install it first.'
+    exit 1
+fi
+
 if [ `which rsync | wc -l` -lt 1 ]; then
     echo 'ERROR: required binary "rsync" not available on this system, please install it first.'
     exit 1
@@ -34,6 +39,10 @@ if [ ! -f ${terraform_tfstate} ]; then
     echo 'ERROR: unable to locate terraform.tfstate required extract required attributes from'
     exit 1
 fi
+
+local_minion_config_file=`cat ${terraform_tfstate} | jq '.modules[].outputs.salt_local_minion_config_file.value' | grep -v '^null' | tr -d '"'`
+local_minion_config_file=`realpath ${local_minion_config_file}`
+echo 'local_minion_config_file: '${local_minion_config_file}
 
 local_states_path=`cat ${terraform_tfstate} | jq '.modules[].outputs.salt_local_state_tree.value' | grep -v '^null' | tr -d '"'`
 local_states_path=`realpath ${local_states_path}`
@@ -48,6 +57,11 @@ echo 'remote_states_path: '${remote_states_path}
 
 remote_pillars_path=`cat ${terraform_tfstate} | jq '.modules[].outputs.salt_remote_pillar_roots.value' | grep -v '^null' | tr -d '"'`
 echo 'remote_pillars_path: '${remote_pillars_path}
+
+if [ ! -z ${local_minion_config_file} ] && [ ! -f ${local_minion_config_file} ]; then
+    echo 'ERROR: unable to find local_minion_config_file: '${local_minion_config_file}
+    exit 1
+fi
 
 if [ ! -d ${local_states_path} ]; then
     echo 'ERROR: unable to locate local_states_path: '${local_states_path}
@@ -68,6 +82,12 @@ if [ ${?} -gt 0 ]; then
     exit 1
 fi
 echo 'connect to '${remote_address}' on tcp:'${ssh_port}' - Okay!'
+
+if [ ! -z ${local_minion_config_file} ]; then
+    echo 'uploading local_minion_config_file and putting into place...'
+    scp "${local_minion_config_file}" ${remote_address}:/tmp/terraform-digitalocean-salt-masterless_minion.config
+    ssh ${remote_address} "sudo mv /tmp/terraform-digitalocean-salt-masterless_minion.config /etc/salt/minion; sudo chmod 0644 /etc/salt/minion; sudo chown root:root /etc/salt/minion"
+fi
 
 echo 'setting remote file ownership...'
 ssh ${remote_address} "sudo chown -R \`whoami\` /opt/salt"
