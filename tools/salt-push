@@ -20,7 +20,7 @@ fi
 
 echo ''
 echo `basename ${0}`
-echo '==========='
+echo '==='
 
 terraform_tfstate=${1}
 custom_state=${2:-"state.highstate"}
