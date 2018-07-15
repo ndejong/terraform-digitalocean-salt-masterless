@@ -41,6 +41,11 @@ rsyncd remote_pillars_path - Okay!
 calling salt-call over ssh...
 ```
 
+## History
+This module was originally published via `https://github.com/ndejong/terraform-digitalocean-salt-masterless` 
+and was subsequently moved which required it to be removed and re-added to the Terraform Module repository.
+
+
 ## Input Variables - Required
 
 ### hostname
