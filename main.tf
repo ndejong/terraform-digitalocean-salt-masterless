@@ -1,3 +1,11 @@
+# terraform-digitalocean-salt-masterless
+# ============================================================================
+
+# Copyright (c) 2018 Verb Networks Pty Ltd <contact [at] verbnetworks.com>
+#  - All rights reserved.
+#
+# Apache License v2.0
+#  - http://www.apache.org/licenses/LICENSE-2.0
 
 # Generate a temporary ssh keypair to bootstrap this digitalocean_droplet
 # ============================================================================

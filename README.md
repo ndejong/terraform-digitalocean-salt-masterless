@@ -12,7 +12,7 @@ as shown in the example below:-
 
 ```hcl
 module "droplet-saltstack-example" {
-  source  = "ndejong/salt-masterless/digitalocean"
+  source  = "verbnetworks/salt-masterless/digitalocean"
   hostname = "node0-sfo2-digitalocean"
   digitalocean_region = "sfo2"
   salt_local_state_tree = "/path/to/salt/states"
@@ -140,7 +140,7 @@ The terraform-bootstrap-sshkey that was used to bootstrap this droplet.
 
 
 ## Authors
-Module managed by [Nicholas de Jong](https://github.com/ndejong).
+Module managed by [Verb Networks](https://github.com/verbnetworks)
 
 ## License
 Apache 2 Licensed. See LICENSE for full details.
