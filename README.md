@@ -68,20 +68,32 @@ system address, local and remote paths - this allows you to very easily push and
 a one-line command.
 
 ```bash
-./tools/salt-push /path/to/terraform.tfstate
+$ ./tools/salt-push /path/to/terraform.tfstate
 
 salt-push
 ===
+local_minion_config_file: /dev/null
 local_states_path: /path/to/salt/states
 local_pillars_path: /path/to/salt/pillars
-remote_states_path: /opt/salt/states
-remote_pillars_path: /opt/salt/pillars
+remote_states_path: /srv/salt
+remote_pillars_path: /srv/pillar
 remote_address: x.x.x.x
 connect to x.x.x.x on tcp:22 - Okay!
-setting remote file ownership...
+temp setting remote salt-config ownership to allow remote salt-config changes...
 rsyncd remote_states_path - Okay!
 rsyncd remote_pillars_path - Okay!
-calling salt-call over ssh...
+setting remote salt-config ownership back to root...
+invoking salt-call over ssh...
+
+...
+
+Summary for local
+------------
+Succeeded: 4
+Failed:    0
+------------
+Total states run:     4
+Total run time:  70.244 ms
 ```
 
 ## History
@@ -116,13 +128,17 @@ Local path to the SaltStack pillar-roots to apply to the remote system
 Disable the root login after droplet has completed deployment - NB: the root bootstrap-sshkey remains in CLEARTEXT in the Terraform statefile, setting this parameter to '1' removes the bootstrap ssh-publickey from the remote system and sets PermitRootLogin to 'no' in the ssh-config after the bootstrap process is complete.
  - default = 1
 
+### disable_saltminion_service
+The salt-minion service is by default installed and started as a service which in a salt-headless arrangement is not required, this option by default disables that service.
+ - default = 1
+
 ### salt_local_minion_config_file
 Local salt minion config to be pushed to the remote system
  - default = ""
 
 ### salt_remote_state_tree
 Remote system remote_state_tree path
- - Default = "/srv/salt"
+ - default = "/srv/salt"
 
 ### salt_remote_pillar_roots
 Remote system remote_pillar_roots path
@@ -161,7 +177,7 @@ Enable/disable private-networking functionality on this digitalocean-droplet.
  - default = false
 
 ### digitalocean_volume0
-Volume0 to attach to this digitalocean-droplet in the format `<mount-point>:<mount-device>:<volume-id>:<mount-fstype>`
+Volume0 to attach to this digitalocean-droplet in the format `<mount-point>:<mount-device>:<volume-id>:<mount-fstype>` - review README for information on discovering the <volume-id> value.
  - default = ""
 
 
