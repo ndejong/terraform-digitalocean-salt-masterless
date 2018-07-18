@@ -12,11 +12,11 @@
 # ============================================================================
 
 variable "hostname" {
-  description = "The hostname applied to this strelaysrv-node droplet."
+  description = "The hostname applied to this salt-masterless droplet."
 }
 
 variable "digitalocean_region" {
-  description = "The DigitalOcean region-slug to start this strelaysrv-node within (nyc1, sgp1, lon1, nyc3, ams3, fra1, tor1, sfo2, blr1)"
+  description = "The DigitalOcean region-slug to start this salt-masterless within (nyc1, sgp1, lon1, nyc3, ams3, fra1, tor1, sfo2, blr1)"
 }
 
 variable "digitalocean_token" {
