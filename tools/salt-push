@@ -46,25 +46,25 @@ if [ ! -f ${terraform_tfstate} ]; then
     exit 1
 fi
 
-local_minion_config_file=`cat ${terraform_tfstate} | jq '.modules[].outputs.salt_local_minion_config_file.value' | grep -v '^null' | tr -d '"'`
+local_minion_config_file=$(jq -r '.modules[].outputs.salt_local_minion_config_file.value' ${terraform_tfstate} | head -n1 | grep -v '^null')
 local_minion_config_file=`realpath ${local_minion_config_file}`
 echo 'local_minion_config_file: '${local_minion_config_file}
 
-local_states_path=`cat ${terraform_tfstate} | jq '.modules[].outputs.salt_local_state_tree.value' | grep -v '^null' | tr -d '"'`
+local_states_path=$(jq -r '.modules[].outputs.salt_local_state_tree.value' ${terraform_tfstate} | head -n1 | grep -v '^null')
 local_states_path=`realpath ${local_states_path}`
 echo 'local_states_path: '${local_states_path}
 
-local_pillars_path=`cat ${terraform_tfstate} | jq '.modules[].outputs.salt_local_pillar_roots.value' | grep -v '^null' | tr -d '"'`
+local_pillars_path=$(jq -r '.modules[].outputs.salt_local_pillar_roots.value' ${terraform_tfstate} | head -n1 | grep -v '^null')
 local_pillars_path=`realpath ${local_pillars_path}`
 echo 'local_pillars_path: '${local_pillars_path}
 
-remote_states_path=`cat ${terraform_tfstate} | jq '.modules[].outputs.salt_remote_state_tree.value' | grep -v '^null' | tr -d '"'`
+remote_states_path=$(jq -r '.modules[].outputs.salt_remote_state_tree.value' ${terraform_tfstate} | head -n1 | grep -v '^null')
 echo 'remote_states_path: '${remote_states_path}
 
-remote_pillars_path=`cat ${terraform_tfstate} | jq '.modules[].outputs.salt_remote_pillar_roots.value' | grep -v '^null' | tr -d '"'`
+remote_pillars_path=$(jq -r '.modules[].outputs.salt_remote_pillar_roots.value' ${terraform_tfstate} | head -n1 | grep -v '^null')
 echo 'remote_pillars_path: '${remote_pillars_path}
 
-if [ ! -z ${local_minion_config_file} ] && [ ! -f ${local_minion_config_file} ]; then
+if [ ! -z ${local_minion_config_file} ] && [ ! -e ${local_minion_config_file} ]; then
     echo 'ERROR: unable to find local_minion_config_file: '${local_minion_config_file}
     exit 1
 fi
@@ -79,7 +79,7 @@ if [ ! -d ${local_pillars_path} ]; then
     exit 1
 fi
 
-remote_address=`cat ${terraform_tfstate} | jq '.modules[].resources[] | select(.type=="digitalocean_droplet") | .primary.attributes.ipv4_address' | tr -d '"'`
+remote_address=$(jq -r '.modules[].resources[] | select(.type=="digitalocean_droplet") | .primary.attributes.ipv4_address' ${terraform_tfstate})
 echo 'remote_address: '${remote_address}
 
 nc -z -w5 ${remote_address} ${ssh_port}
@@ -91,12 +91,13 @@ echo 'connect to '${remote_address}' on tcp:'${ssh_port}' - Okay!'
 
 if [ ${local_minion_config_file} != '/dev/null' ]; then
     echo 'uploading local_minion_config_file and putting into place...'
-    scp "${local_minion_config_file}" ${remote_address}:/tmp/terraform-digitalocean-salt-masterless_minion.config
-    ssh ${remote_address} "sudo mv /tmp/terraform-digitalocean-salt-masterless_minion.config /etc/salt/minion; sudo chmod 0644 /etc/salt/minion; sudo chown root:root /etc/salt/minion"
+    remote_temp_minion_config_file='/tmp/etc-salt-minion.'`date -u +%Y%m%dZ%H%M%S`
+    scp "${local_minion_config_file}" ${remote_address}:${remote_temp_minion_config_file}
+    ssh ${remote_address} "sudo mv ${remote_temp_minion_config_file} /etc/salt/minion; sudo chmod 0644 /etc/salt/minion; sudo chown root:root /etc/salt/minion"
 fi
 
-echo 'setting remote file ownership...'
-ssh ${remote_address} "sudo chown -R \`whoami\` /opt/salt"
+echo 'temp setting remote salt-config ownership to allow remote salt-config changes...'
+ssh ${remote_address} "sudo chown -R \`whoami\`.\`whoami\` ${remote_states_path}; sudo chown -R \`whoami\`.\`whoami\` ${remote_pillars_path}"
 
 rsync -ra --delete ${local_states_path}/ ${remote_address}:${remote_states_path}/
 if [ ${?} -eq 0 ]; then
@@ -114,7 +115,10 @@ else
     exit 1
 fi
 
-echo 'calling salt-call over ssh...'
+echo 'setting remote salt-config ownership back to root...'
+ssh ${remote_address} "sudo chown -R root.root ${remote_states_path}; sudo chown -R root.root ${remote_pillars_path}"
+
+echo 'invoking salt-call over ssh...'
 salt_call_command="sudo salt-call --local ${custom_state} --file-root=${remote_states_path} --pillar-root=${remote_pillars_path} --retcode-passthrough"
 ssh ${remote_address} "${salt_call_command}"
 
