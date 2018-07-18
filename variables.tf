@@ -39,6 +39,11 @@ variable "disable_root_login" {
   default = 1
 }
 
+variable "disable_saltminion_service" {
+  description = "The salt-minion service is by default installed and started as a service which in a salt-headless arrangement is not required, this option by default disables that service"
+  default = 1
+}
+
 variable "salt_local_minion_config_file" {
   description = "Local salt minion config to be pushed to the remote system"
 
@@ -114,7 +119,7 @@ variable "digitalocean_private_networking" {
 # variables - optional
 # ============================================================================
 variable "digitalocean_volume0" {
-  description = "Volume0 to attach to this digitalocean-droplet in the format <mount-point>:<mount-device>:<volume-id>:<mount-fstype>"
+  description = "Volume0 to attach to this digitalocean-droplet in the format <mount-point>:<mount-device>:<volume-id>:<mount-fstype> - review README for information on discovering the <volume-id> value."
 
   #
   # example value:
