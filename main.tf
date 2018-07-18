@@ -7,8 +7,14 @@
 # Apache License v2.0
 #  - http://www.apache.org/licenses/LICENSE-2.0
 
-# Generate a temporary ssh keypair to bootstrap this digitalocean_droplet
-# ============================================================================
+# establish the digitalocean provider
+# ===
+provider "digitalocean" {
+  token = "${var.digitalocean_token}"
+}
+
+# create a unique build-id value for this startup process
+# ===
 resource "random_string" "random-chars" {
   length = 6
   lower = false
@@ -17,11 +23,18 @@ resource "random_string" "random-chars" {
   special = false
 }
 
+# Generate a temporary ssh keypair to bootstrap this instance
+# ===
 resource "tls_private_key" "terraform-bootstrap-sshkey" {
   algorithm = "RSA"
   rsa_bits = "4096"
 }
 
+# attach the temporary sshkey to the provider account for this image build
+# ===
+# !!!  NB: this ssh key remains in CLEAR TEXT in the terraform.tfstate file and can be extracted using:-
+# !!!  $ cat terraform.tfstate | jq --raw-output '.modules[1].resources["tls_private_key.terraform-bootstrap-sshkey"].primary.attributes.private_key_pem'
+# ===
 resource "digitalocean_ssh_key" "terraform-bootstrap-sshkey" {
   name = "terraform-bootstrap-sshkey-${random_string.random-chars.result}"
   public_key = "${tls_private_key.terraform-bootstrap-sshkey.public_key_openssh}"
@@ -29,7 +42,7 @@ resource "digitalocean_ssh_key" "terraform-bootstrap-sshkey" {
 }
 
 # Render the required userdata
-# ============================================================================
+# ===
 data "template_file" "cloudinit-bootstrap-sh" {
   template = "${file("${path.module}/data/cloudinit-bootstrap.sh")}"
   vars {
@@ -39,9 +52,10 @@ data "template_file" "cloudinit-bootstrap-sh" {
   }
 }
 
+# create the cloudinit user-data string to apply to this droplet
+# ===
 data "template_cloudinit_config" "droplet-userdata" {
 
-  #
   # NB: some kind of cloud-init issue prevents gzip+base64 from working with digitalocean, we (mostly) work around this
   # using a " echo | base64 -d | gunzip | /bin/bash" style pipe chain as per below
   #
@@ -51,12 +65,12 @@ data "template_cloudinit_config" "droplet-userdata" {
   part {
     content_type = "text/x-shellscript"
     filename = "cloudinit-bootstrap.sh"
-    content = "#!/bin/bash\necho -n '${base64gzip(data.template_file.cloudinit-bootstrap-sh.rendered)}' | base64 -d | gunzip | /bin/bash"
+    content = "#!/bin/sh\necho -n '${base64gzip(data.template_file.cloudinit-bootstrap-sh.rendered)}' | base64 -d | gunzip | /bin/sh"
   }
 }
 
 # Establish the digitalocean_droplet with a salt-masterless provisioner
-# ============================================================================
+# ===
 resource "digitalocean_droplet" "droplet" {
   image = "${var.digitalocean_image}"
   name = "${var.hostname}"
@@ -99,26 +113,28 @@ resource "digitalocean_droplet" "droplet" {
 
   provisioner "salt-masterless" {
 
-    #
     # NB: as at commit:e9e4ee4 there seems to be a bug in https://github.com/hashicorp/terraform/blob/master/builtin/provisioners/salt-masterless/resource_provisioner.go
     #     that is preventing p.RemoteStateTree and p.RemotePillarRoots being set when p.MinionConfig == "" which in turn
     #     means it is not currently possible to use the "minion_config_file" option in this module until resolved
     #
     # minion_config_file = "${var.salt_local_minion_config_file}"
-    #
 
     local_state_tree = "${var.salt_local_state_tree}"
     local_pillar_roots = "${var.salt_local_pillar_roots}"
+
     remote_state_tree = "${var.salt_remote_state_tree}"
     remote_pillar_roots = "${var.salt_remote_pillar_roots}"
+
     custom_state = "${var.salt_custom_state}"
     log_level = "${var.salt_log_level}"
   }
 
 }
 
+# cleanup and remove the root account if configured to do so
+# ===
 resource "null_resource" "droplet-permitrootlogin" {
-  count = "${-1 * (var.permit_root_login - 1)}"
+  count = "${var.disable_root_login}"
 
   connection {
     host = "${digitalocean_droplet.droplet.ipv4_address}"
