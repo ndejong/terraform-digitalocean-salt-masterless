@@ -7,12 +7,6 @@
 # Apache License v2.0
 #  - http://www.apache.org/licenses/LICENSE-2.0
 
-# establish the digitalocean provider
-# ===
-provider "digitalocean" {
-  token = "${var.digitalocean_token}"
-}
-
 # create a unique build-id value for this startup process
 # ===
 resource "random_string" "random-chars" {

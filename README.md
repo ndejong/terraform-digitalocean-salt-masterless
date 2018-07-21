@@ -14,33 +14,38 @@ as shown in the example below:-
 ```hcl
 variable "do_token" {}    # set via environment value `TF_VAR_do_token`
 
-module "terraform-digitalocean-strelaysrv-node" {
+provider "digitalocean" {
+  token = "${var.do_token}"
+}
+
+module "terraform-digitalocean-salt-masterless" {
   source  = "verbnetworks/salt-masterless/digitalocean"
 
   # required variables
   # ===
   hostname = "node08"
   digitalocean_region = "sgp1"
-  digitalocean_token = "${var.do_token}"
-  salt_local_state_tree = "/path/to/node08/states"
-  salt_local_pillar_roots = "/path/to/node08/pillars"
+  salt_local_state_tree = "/local/path/to/node08/states"
+  salt_local_pillar_roots = "/local/path/to/node08/pillars"
 
   # optional variables
   # ===
   # digitalocean_volume0 = "<mount-point>:<mount-device>:<volume-id>:<mount-fstype>"
-  digitalocean_volume0 = "/mnt:/dev/disk/by-id/scsi-0DO_Volume_example01:0010c05e-20ad-10e0-9007-00000c113408:ext4"
+  # 
+  # Example:-
+  # digitalocean_volume0 = "/mnt:/dev/disk/by-id/scsi-0DO_Volume_example01:0010c05e-20ad-10e0-9007-00000c113408:ext4"
 }
 
 # optional outputs
-output "hostname" { value = "${module.terraform-digitalocean-strelaysrv-node.hostname}" }
-output "region" { value = "${module.terraform-digitalocean-strelaysrv-node.region}" }
-output "ipv4_address" { value = "${module.terraform-digitalocean-strelaysrv-node.ipv4_address}" }
-output "volume0" { value = "${module.terraform-digitalocean-strelaysrv-node.volume0}" }
-output "salt_local_minion_config_file" { value = "${module.terraform-digitalocean-strelaysrv-node.salt_local_minion_config_file}" }
-output "salt_local_state_tree" { value = "${module.terraform-digitalocean-strelaysrv-node.salt_local_state_tree}" }
-output "salt_local_pillar_roots" { value = "${module.terraform-digitalocean-strelaysrv-node.salt_local_pillar_roots}" }
-output "salt_remote_state_tree" { value = "${module.terraform-digitalocean-strelaysrv-node.salt_remote_state_tree}" }
-output "salt_remote_pillar_roots" { value = "${module.terraform-digitalocean-strelaysrv-node.salt_remote_pillar_roots}" }
+output "hostname" { value = "${module.terraform-digitalocean-salt-masterless.hostname}" }
+output "region" { value = "${module.terraform-digitalocean-salt-masterless.region}" }
+output "ipv4_address" { value = "${module.terraform-digitalocean-salt-masterless.ipv4_address}" }
+output "volume0" { value = "${module.terraform-digitalocean-salt-masterless.volume0}" }
+output "salt_local_minion_config_file" { value = "${module.terraform-digitalocean-salt-masterless.salt_local_minion_config_file}" }
+output "salt_local_state_tree" { value = "${module.terraform-digitalocean-salt-masterless.salt_local_state_tree}" }
+output "salt_local_pillar_roots" { value = "${module.terraform-digitalocean-salt-masterless.salt_local_pillar_roots}" }
+output "salt_remote_state_tree" { value = "${module.terraform-digitalocean-salt-masterless.salt_remote_state_tree}" }
+output "salt_remote_pillar_roots" { value = "${module.terraform-digitalocean-salt-masterless.salt_remote_pillar_roots}" }
 ```
 
 #### Note on the `digitalocean_volume0` attribute

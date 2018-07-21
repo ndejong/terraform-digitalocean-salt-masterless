@@ -19,10 +19,6 @@ variable "digitalocean_region" {
   description = "The DigitalOcean region-slug to start this salt-masterless within (nyc1, sgp1, lon1, nyc3, ams3, fra1, tor1, sfo2, blr1)"
 }
 
-variable "digitalocean_token" {
-  description = "Your DigitalOcean API token used to issue cURL API calls directly to DigitalOcean to create the required image"
-}
-
 variable "salt_local_state_tree" {
   description = "Salt local_state_tree path"
 }
