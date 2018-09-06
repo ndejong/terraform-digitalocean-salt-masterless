@@ -117,9 +117,6 @@ The hostname applied to this strelaysrv-node droplet.
 ### digitalocean_region
 The DigitalOcean region-slug to start this strelaysrv-node within (nyc1, sgp1, lon1, nyc3, ams3, fra1, tor1, sfo2, blr1)
 
-### digitalocean_token
-Your DigitalOcean API token used to issue cURL API calls directly to DigitalOcean to create the required image
-
 ### salt_local_state_tree
 Local path to the SaltStack state-tree to apply to the remote system
 
