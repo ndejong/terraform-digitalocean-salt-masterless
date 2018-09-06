@@ -177,5 +177,5 @@ resource "null_resource" "disable-root-login" {
     ]
   }
 
-  depends_on = [ "digitalocean_droplet.droplet" ]
+  depends_on = [ "null_resource.disable-saltminion-service" ]
 }
