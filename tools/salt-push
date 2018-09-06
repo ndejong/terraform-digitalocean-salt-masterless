@@ -46,25 +46,25 @@ if [ ! -f ${terraform_tfstate} ]; then
     exit 1
 fi
 
-local_minion_config_file=$(jq -r '.modules[].outputs.salt_local_minion_config_file.value' ${terraform_tfstate} | head -n1 | grep -v '^null')
+local_minion_config_file=$(jq -r '.modules[].outputs.salt_local_minion_config_file.value' ${terraform_tfstate} | grep -v '^null' | head -n1)
 local_minion_config_file=`realpath ${local_minion_config_file}`
 echo 'local_minion_config_file: '${local_minion_config_file}
 
-local_states_path=$(jq -r '.modules[].outputs.salt_local_state_tree.value' ${terraform_tfstate} | head -n1 | grep -v '^null')
+local_states_path=$(jq -r '.modules[].outputs.salt_local_state_tree.value' ${terraform_tfstate} | grep -v '^null' | head -n1 )
 local_states_path=`realpath ${local_states_path}`
 echo 'local_states_path: '${local_states_path}
 
-local_pillars_path=$(jq -r '.modules[].outputs.salt_local_pillar_roots.value' ${terraform_tfstate} | head -n1 | grep -v '^null')
+local_pillars_path=$(jq -r '.modules[].outputs.salt_local_pillar_roots.value' ${terraform_tfstate} | grep -v '^null' | head -n1)
 local_pillars_path=`realpath ${local_pillars_path}`
 echo 'local_pillars_path: '${local_pillars_path}
 
-remote_states_path=$(jq -r '.modules[].outputs.salt_remote_state_tree.value' ${terraform_tfstate} | head -n1 | grep -v '^null')
+remote_states_path=$(jq -r '.modules[].outputs.salt_remote_state_tree.value' ${terraform_tfstate} | grep -v '^null' | head -n1)
 echo 'remote_states_path: '${remote_states_path}
 
-remote_pillars_path=$(jq -r '.modules[].outputs.salt_remote_pillar_roots.value' ${terraform_tfstate} | head -n1 | grep -v '^null')
+remote_pillars_path=$(jq -r '.modules[].outputs.salt_remote_pillar_roots.value' ${terraform_tfstate} | grep -v '^null' | head -n1)
 echo 'remote_pillars_path: '${remote_pillars_path}
 
-if [ ! -z ${local_minion_config_file} ] && [ ! -e ${local_minion_config_file} ]; then
+if [ -z ${local_minion_config_file} ] || [ ! -e ${local_minion_config_file} ]; then
     echo 'ERROR: unable to find local_minion_config_file: '${local_minion_config_file}
     exit 1
 fi
