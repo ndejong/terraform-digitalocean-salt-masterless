@@ -178,6 +178,10 @@ Enable/disable getting a public IPv6 on this digitalocean-droplet.
 Enable/disable private-networking functionality on this digitalocean-droplet.
  - default = false
 
+### digitalocean_tags
+List of tags to apply to this Droplet, the tags MUST already exist!
+ - default = []
+ 
 ### digitalocean_volume0
 Volume0 to attach to this digitalocean-droplet in the format `<mount-point>:<mount-device>:<volume-id>:<mount-fstype>` - review README for information on discovering the <volume-id> value.
  - default = ""
