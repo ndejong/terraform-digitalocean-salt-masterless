@@ -75,10 +75,12 @@ resource "digitalocean_droplet" "droplet" {
   ipv6 = "${var.digitalocean_ipv6}"
   private_networking = "${var.digitalocean_private_networking}"
   ssh_keys = [ "${digitalocean_ssh_key.terraform-bootstrap-sshkey.id}" ]
-  depends_on = [ "digitalocean_ssh_key.terraform-bootstrap-sshkey" ]
-
-  volume_ids = [ "${element(split(":", var.digitalocean_volume0),2)}" ]
+  # resize_disk = false   # default = true
+  tags = "${var.digitalocean_tags}"
   user_data = "${data.template_cloudinit_config.droplet-userdata.rendered}"
+  volume_ids = [ "${element(split(":", var.digitalocean_volume0),2)}" ]
+
+  depends_on = [ "digitalocean_ssh_key.terraform-bootstrap-sshkey" ]
 
   connection {
     type = "ssh"
