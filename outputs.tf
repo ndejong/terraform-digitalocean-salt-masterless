@@ -31,7 +31,7 @@ output "ipv4_address" {
 //  - ipv6_address
 //  - ipv6_address_private
 //
-// you may need to perform a `terraform init -update` to get the latest Digital Ocean provider
+// you may need to perform a `terraform init -upgrade` to get the latest Digital Ocean provider
 //
 
 output "ipv4_address_private" {
