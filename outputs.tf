@@ -26,24 +26,28 @@ output "ipv4_address" {
 }
 
 //
-// Waiting for this to land
-// https://github.com/terraform-providers/terraform-provider-digitalocean/pull/97
+// you will require the latest Digital Ocean provider to access these attributes:-
+//  - ipv4_address_private
+//  - ipv6_address
+//  - ipv6_address_private
 //
-// output "ipv4_address_private" {
-//   description = "The private IPv4 address of this digitalocean-droplet."
-//   value = "${digitalocean_droplet.droplet.ipv4_address_private}"
-// }
+// you may need to perform a `terraform init -update` to get the latest Digital Ocean provider
 //
-// output "ipv6_address" {
-//   description = "The public IPv6 address of this digitalocean-droplet."
-//   value = "${digitalocean_droplet.droplet.ipv6_address}"
-// }
-//
-// output "ipv6_address_private" {
-//   description = "The private IPv6 address of this digitalocean-droplet."
-//   value = "${digitalocean_droplet.droplet.ipv6_address_private}"
-// }
-//
+
+output "ipv4_address_private" {
+  description = "The private IPv4 address of this digitalocean-droplet."
+  value = "${digitalocean_droplet.droplet.ipv4_address_private}"
+}
+
+output "ipv6_address" {
+  description = "The public IPv6 address of this digitalocean-droplet."
+  value = "${digitalocean_droplet.droplet.ipv6_address}"
+}
+
+output "ipv6_address_private" {
+  description = "The private IPv6 address of this digitalocean-droplet."
+  value = "${digitalocean_droplet.droplet.ipv6_address_private}"
+}
 
 output "volume0" {
   description = "The volume attach to this digitalocean-droplet in the format <mount-point>:<mount-device>:<volume-id>:<mount-fstype>"
