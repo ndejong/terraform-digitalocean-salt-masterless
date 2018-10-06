@@ -198,6 +198,15 @@ The digitalocean region-slug this digitalocean-droplet is running in.
 ### ipv4_address
 The public IPv4 address of this digitalocean-droplet.
 
+### ipv4_address_private
+The private IPv4 address of this digitalocean-droplet.
+
+### ipv6_address
+The public IPv6 address of this digitalocean-droplet.
+
+### ipv6_address_private
+The private IPv6 address of this digitalocean-droplet.
+
 ### volume0
 The volume attach to this digitalocean-droplet in the format `<mount-point>:<mount-device>:<volume-id>:<mount-fstype>`
 
