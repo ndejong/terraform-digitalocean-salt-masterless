@@ -12,7 +12,7 @@ if [ -z ${1} ]; then
     echo ""
     echo " - push local salt-pillars and salt-states to host(s) via ssh-agent auth session."
     echo ""
-    echo "    <terraform-tfstate> (required) - the terraform.tfstate file"
+    echo "    <terraform-tfstate> (required) - terraform.tfstate file, either local-file or aws-s3 location"
     echo "    <custom-state> (optional) - custom_state salt function to call"
     echo ""
     exit 1
@@ -24,7 +24,8 @@ echo '==='
 
 terraform_tfstate=${1}
 custom_state=${2:-"state.highstate"}
-ssh_port="22"
+ssh_port='22'
+tfstate_tmp='/tmp/salt-push-tfstate-'$(head /dev/urandom | md5sum | head -c 8)'.tmp'
 
 if [ `which jq | wc -l` -lt 1 ]; then
     echo 'ERROR: required binary "jq" not available on this system, please install it first.'
@@ -41,8 +42,17 @@ if [ `which rsync | wc -l` -lt 1 ]; then
     exit 1
 fi
 
+if [ `echo "${terraform_tfstate}" | grep 's3://' | wc -l` -gt 0 ]; then
+    aws s3 cp "${terraform_tfstate}" "${tfstate_tmp}"
+    if [ ! -f ${tfstate_tmp} ]; then
+        echo 'ERROR: tfstate not found at provided S3 location.'
+        exit 1
+    fi
+    terraform_tfstate="${tfstate_tmp}"
+fi
+
 if [ ! -f ${terraform_tfstate} ]; then
-    echo 'ERROR: unable to locate terraform.tfstate required extract required attributes from'
+    echo 'ERROR: unable to locate terraform.tfstate file.'
     exit 1
 fi
 
@@ -121,6 +131,10 @@ ssh ${remote_address} "sudo chown -R root.root ${remote_states_path}; sudo chown
 echo 'invoking salt-call over ssh...'
 salt_call_command="sudo salt-call --local ${custom_state} --file-root=${remote_states_path} --pillar-root=${remote_pillars_path} --retcode-passthrough"
 ssh ${remote_address} "${salt_call_command}"
+
+if [ -f ${tfstate_tmp} ]; then
+    rm -f "${tfstate_tmp}"
+fi
 
 echo ''
 exit 0
