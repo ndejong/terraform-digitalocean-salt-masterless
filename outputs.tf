@@ -20,13 +20,18 @@ output "region" {
   value = "${var.digitalocean_region}"
 }
 
+output "droplet_id" {
+  description = "The droplet_id of this digitalocean-droplet."
+  value = "${digitalocean_droplet.droplet.id}"
+}
+
 output "ipv4_address" {
   description = "The public IPv4 address of this digitalocean-droplet."
   value = "${digitalocean_droplet.droplet.ipv4_address}"
 }
 
 //
-// you will require the latest Digital Ocean provider to access these attributes:-
+// Requires the latest Digital Ocean provider to access these attributes:-
 //  - ipv4_address_private
 //  - ipv6_address
 //  - ipv6_address_private
